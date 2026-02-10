@@ -48,7 +48,7 @@ public class Order {
         this.createdAt = Objects.requireNonNull(createdAt, "Created timestamp cannot be null");
         this.updatedAt = Objects.requireNonNull(updatedAt, "Updated timestamp cannot be null");
         
-        validateOrderHasItems();
+
     }
 
     /**
