@@ -47,8 +47,7 @@ public class Order {
         this.status = Objects.requireNonNull(status, "Status cannot be null");
         this.createdAt = Objects.requireNonNull(createdAt, "Created timestamp cannot be null");
         this.updatedAt = Objects.requireNonNull(updatedAt, "Updated timestamp cannot be null");
-        
-
+        // Validation happens in confirm() - not here - because items are added after creation
     }
 
     /**
