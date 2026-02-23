@@ -9,14 +9,10 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
-/**
- * In-memory implementation of UserRepository.
- * Swap this out for a JPA implementation when you connect a real database.
- */
 @Repository
 public class InMemoryUserRepository implements UserRepository {
 
-    private final Map<UUID, User> byId        = new ConcurrentHashMap<>();
+    private final Map<UUID, User>   byId        = new ConcurrentHashMap<>();
     private final Map<String, User> byStudentId = new ConcurrentHashMap<>();
 
     @Override
@@ -38,5 +34,13 @@ public class InMemoryUserRepository implements UserRepository {
     @Override
     public boolean existsByStudentId(String studentId) {
         return byStudentId.containsKey(studentId);
+    }
+
+    @Override
+    public Optional<User> findByResetToken(String resetToken) {
+        // Scan all users for matching token - fine for in-memory demo
+        return byId.values().stream()
+            .filter(u -> resetToken.equals(u.getResetToken()))
+            .findFirst();
     }
 }
