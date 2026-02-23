@@ -5,18 +5,18 @@ import com.company.delivery.domain.model.User;
 import java.util.Optional;
 import java.util.UUID;
 
-/**
- * Repository port for User persistence.
- */
 public interface UserRepository {
 
     void save(User user);
 
     Optional<User> findById(UUID id);
 
-    /** Used at login - look up by school student ID */
+    /** Used at login */
     Optional<User> findByStudentId(String studentId);
 
-    /** Used at registration - check the student ID isn't already taken */
+    /** Used at registration to prevent duplicates */
     boolean existsByStudentId(String studentId);
+
+    /** Used during password reset to validate the token */
+    Optional<User> findByResetToken(String resetToken);
 }

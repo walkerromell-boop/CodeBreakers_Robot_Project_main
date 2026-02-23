@@ -14,16 +14,15 @@ import java.io.IOException;
 import java.util.List;
 
 /**
- * Runs once per request. Checks for a valid JWT in the Authorization header.
+ * Validates JWT on every request.
  *
- * <p>If a valid token is found, the user is set as authenticated in the
- * SecurityContext so the rest of the request proceeds normally.
- *
- * <p>If the token is missing or invalid, the filter just continues the chain -
- * Spring Security will then block access to protected endpoints with 401.
+ * Only FULL tokens grant access to protected endpoints.
+ * PENDING_2FA tokens are only accepted at /api/v1/auth/2fa/verify.
  */
 @Component
 public class JwtAuthFilter extends OncePerRequestFilter {
+
+    private static final String TOTP_VERIFY_PATH = "/api/v1/auth/2fa/verify";
 
     private final JwtService jwtService;
 
@@ -39,26 +38,38 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 
         String authHeader = request.getHeader("Authorization");
 
-        // No token - let the filter chain continue (unauthenticated)
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
             filterChain.doFilter(request, response);
             return;
         }
 
-        String token = authHeader.substring(7); // strip "Bearer "
+        String token = authHeader.substring(7);
 
-        if (jwtService.isValid(token)) {
-            String userId    = jwtService.extractUserId(token);
+        if (!jwtService.isValid(token)) {
+            filterChain.doFilter(request, response);
+            return;
+        }
+
+        boolean isPending = jwtService.isPending2faToken(token);
+        boolean isFull    = jwtService.isFullToken(token);
+        String  path      = request.getServletPath();
+
+        // Pending 2FA tokens only work at the verify endpoint
+        if (isPending && !path.equals(TOTP_VERIFY_PATH)) {
+            filterChain.doFilter(request, response);
+            return;
+        }
+
+        // Full tokens (or pending at the verify endpoint) - authenticate
+        if (isFull || (isPending && path.equals(TOTP_VERIFY_PATH))) {
             String role      = jwtService.extractRole(token);
+            String userId    = jwtService.extractUserId(token);
             String studentId = jwtService.extractStudentId(token);
 
             var authority = new SimpleGrantedAuthority("ROLE_" + role);
             var auth = new UsernamePasswordAuthenticationToken(
-                userId,      // principal  = user UUID string
-                studentId,   // credentials = student ID (read-only here)
-                List.of(authority)
+                userId, studentId, List.of(authority)
             );
-
             SecurityContextHolder.getContext().setAuthentication(auth);
         }
 
