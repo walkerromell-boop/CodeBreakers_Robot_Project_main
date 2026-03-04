@@ -27,6 +27,7 @@ import java.util.Objects;
  * <p>This class is a pure Java object with NO framework dependencies.
  * Persistence is handled by a separate JPA entity in the infrastructure layer.</p>
  */
+//working
 public class Order {
 
     private final OrderId id;
